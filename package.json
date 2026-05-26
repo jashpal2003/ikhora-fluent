@@ -1,0 +1,34 @@
+{
+  "name": "ikhora-fluent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ikhora Fluent — Global AI-assisted English, IELTS and CEFR learning platform",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:seed": "turbo run db:seed",
+    "db:studio": "pnpm --filter @ikhora/database studio"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "next": "15.2.8",
+    "prettier": "^3.2.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

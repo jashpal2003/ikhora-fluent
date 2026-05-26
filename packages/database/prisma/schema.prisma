@@ -1,0 +1,867 @@
+// ============================================================
+// IKHORA FLUENT — COMPLETE PRISMA SCHEMA
+// PostgreSQL + pgvector for semantic search
+// ============================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [pgvector(map: "vector"), uuidOssp(map: "uuid-ossp")]
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum GlobalRole {
+  USER
+  SUPER_ADMIN
+}
+
+enum OrgRole {
+  STUDENT
+  TEACHER
+  ORG_ADMIN
+  REVIEWER
+}
+
+enum OrgMemberStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum Exam {
+  IELTS
+  CEFR
+  TOEFL
+  PTE
+  DET
+}
+
+enum Skill {
+  WRITING
+  SPEAKING
+  READING
+  LISTENING
+  GRAMMAR
+  VOCABULARY
+  PRONUNCIATION
+}
+
+enum IELTSModule {
+  ACADEMIC_TASK_1
+  ACADEMIC_TASK_2
+  GENERAL_TASK_1
+  GENERAL_TASK_2
+  SPEAKING_PART_1
+  SPEAKING_PART_2
+  SPEAKING_PART_3
+  READING_PASSAGE
+  LISTENING_SECTION_1
+  LISTENING_SECTION_2
+  LISTENING_SECTION_3
+  LISTENING_SECTION_4
+  CEFR_PLACEMENT
+}
+
+enum CEFRLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+enum ContentType {
+  QUESTION
+  PASSAGE
+  AUDIO
+  WRITING_TASK
+  SPEAKING_PROMPT
+  RUBRIC
+  LESSON
+  DRILL
+  MODEL_ANSWER
+  VOCABULARY_LIST
+}
+
+enum OwnerType {
+  GLOBAL
+  ORGANIZATION
+  TEACHER
+}
+
+enum ContentVisibility {
+  PRIVATE
+  ORGANIZATION
+  GLOBAL
+}
+
+enum ReviewStatus {
+  DRAFT
+  AI_CHECKED
+  HUMAN_REVIEWED
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SourceType {
+  MANUAL
+  EXPERT
+  TEACHER_UPLOAD
+  AI_ASSISTED_DRAFT
+  LICENSED
+  PUBLIC_DOMAIN
+}
+
+enum SubmissionType {
+  WRITING
+  SPEAKING
+  READING
+  LISTENING
+  CEFR_PLACEMENT
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  PROCESSING
+  SCORED
+  REVIEW_REQUIRED
+  TEACHER_REVIEWED
+  FINAL
+}
+
+enum AIJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  RETRYING
+}
+
+enum AIJobType {
+  WRITING_SCORE
+  SPEAKING_TRANSCRIBE
+  SPEAKING_SCORE
+  CEFR_CHECK
+  CEFR_ADAPT
+  READABILITY_CHECK
+  QUESTION_GENERATE
+  STUDY_PLAN_GENERATE
+  CONTENT_QUALITY_CHECK
+  REPORT_GENERATE
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE_NOT_GIVEN
+  YES_NO_NOT_GIVEN
+  MATCHING_HEADINGS
+  MATCHING_INFORMATION
+  MATCHING_FEATURES
+  SENTENCE_COMPLETION
+  SUMMARY_COMPLETION
+  FORM_COMPLETION
+  SHORT_ANSWER
+  DIAGRAM_LABELING
+  MAP_LABELING
+  FLOW_CHART
+}
+
+enum PlanTier {
+  FREE
+  STUDENT_PRO
+  INSTITUTE_STARTER
+  INSTITUTE_PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum CertificateStatus {
+  ISSUED
+  REVOKED
+  EXPIRED
+}
+
+enum DataImprovementMode {
+  DISABLED
+  AGGREGATED
+  ANONYMIZED_WITH_CONSENT
+}
+
+enum AuditAction {
+  USER_CREATED
+  USER_ROLE_CHANGED
+  USER_SUSPENDED
+  CONTENT_PUBLISHED
+  CONTENT_ARCHIVED
+  SCORE_OVERRIDDEN
+  REPORT_EXPORTED
+  CERTIFICATE_ISSUED
+  CERTIFICATE_REVOKED
+  ORG_PLAN_CHANGED
+  AI_JOB_FAILED
+  BULK_IMPORT_COMPLETED
+  ADMIN_LOGIN
+  DATA_EXPORTED
+}
+
+// ============================================================
+// ORGANIZATIONS
+// ============================================================
+
+model Organization {
+  id                   String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String
+  slug                 String              @unique
+  logoUrl              String?
+  primaryColor         String?             @default("#6366f1")
+  website              String?
+  description          String?
+  dataImprovementMode  DataImprovementMode @default(DISABLED)
+  isActive             Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  members              OrganizationMember[]
+  classes              Class[]
+  contentItems         ContentItem[]
+  assignments          Assignment[]
+  submissions          Submission[]
+  subscriptions        Subscription[]
+  certificates         Certificate[]
+  auditLogs            AuditLog[]
+  aiJobs               AIJob[]
+  reports              Report[]
+
+  plan                 Plan?               @relation(fields: [planId], references: [id])
+  planId               String?             @db.Uuid
+
+  @@index([slug])
+}
+
+// ============================================================
+// USERS
+// ============================================================
+
+model User {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email            String       @unique
+  name             String
+  hashedPassword   String?
+  globalRole       GlobalRole   @default(USER)
+  authProvider     String       @default("email")
+  emailVerified    Boolean      @default(false)
+  avatarUrl        String?
+  nativeLanguage   String?
+  targetExam       Exam?
+  targetBand       Float?
+  timezone         String?      @default("UTC")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  lastLoginAt      DateTime?
+
+  // Relations
+  orgMemberships   OrganizationMember[]
+  submissions      Submission[]
+  scores           Score[]      @relation("TeacherScores")
+  createdContent   ContentItem[] @relation("ContentCreator")
+  approvedContent  ContentItem[] @relation("ContentApprover")
+  reviews          ContentReview[]
+  assignments      Assignment[] @relation("TeacherAssignments")
+  skillProfile     StudentSkillProfile?
+  certificates     Certificate[]
+  auditLogs        AuditLog[]
+
+  @@index([email])
+}
+
+// ============================================================
+// ORG MEMBERSHIP
+// ============================================================
+
+model OrganizationMember {
+  organizationId String          @db.Uuid
+  userId         String          @db.Uuid
+  role           OrgRole         @default(STUDENT)
+  status         OrgMemberStatus @default(ACTIVE)
+  invitedAt      DateTime?
+  joinedAt       DateTime?
+  createdAt      DateTime        @default(now())
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// ============================================================
+// CLASSES
+// ============================================================
+
+model Class {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  description    String?
+  targetExam     Exam?
+  targetLevel    CEFRLevel?
+  isArchived     Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        ClassMember[]
+  assignments    Assignment[]
+
+  @@index([organizationId])
+}
+
+model ClassMember {
+  classId   String   @db.Uuid
+  userId    String   @db.Uuid
+  role      OrgRole  @default(STUDENT)
+  joinedAt  DateTime @default(now())
+
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@id([classId, userId])
+  @@index([classId])
+  @@index([userId])
+}
+
+// ============================================================
+// CONTENT SYSTEM
+// ============================================================
+
+model ContentItem {
+  id               String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ownerType        OwnerType         @default(GLOBAL)
+  organizationId   String?           @db.Uuid
+  createdById      String            @db.Uuid
+  approvedById     String?           @db.Uuid
+
+  contentType      ContentType
+  exam             Exam?
+  skill            Skill
+  module           IELTSModule?
+  questionType     QuestionType?
+
+  title            String?
+  body             String            // Main content text / prompt
+  bodyHtml         String?           // Rendered HTML version
+  options          Json?             // MCQ options array
+  answerKey        Json?             // Correct answers
+  explanation      String?           // Answer explanation
+  modelAnswer      String?           // Band 8/9 model answer
+
+  cefrLevel        CEFRLevel?
+  difficulty       Float?            @default(0.5)
+  topicTags        String[]          @default([])
+  grammarTargets   String[]          @default([])
+  vocabularyTargets String[]         @default([])
+
+  sourceType       SourceType        @default(MANUAL)
+  sourceNotes      String?           // Copyright/license info
+  visibility       ContentVisibility @default(PRIVATE)
+  reviewStatus     ReviewStatus      @default(DRAFT)
+  currentVersion   Int               @default(1)
+
+  audioUrl         String?           // Azure Blob URL
+  imageUrl         String?
+  audioTranscript  String?
+  accentMetadata   String?           // e.g. "British", "American"
+  wordCount        Int?
+  estimatedMinutes Float?
+
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  organization     Organization?     @relation(fields: [organizationId], references: [id])
+  createdBy        User              @relation("ContentCreator", fields: [createdById], references: [id])
+  approvedBy       User?             @relation("ContentApprover", fields: [approvedById], references: [id])
+  versions         ContentVersion[]
+  reviews          ContentReview[]
+  assignmentItems  AssignmentItem[]
+  embeddings       EmbeddingRecord[]
+
+  @@index([organizationId])
+  @@index([exam, skill, reviewStatus])
+  @@index([visibility, reviewStatus])
+  @@index([cefrLevel])
+}
+
+model ContentVersion {
+  id            String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  contentItemId String      @db.Uuid
+  version       Int
+  body          String
+  options       Json?
+  answerKey     Json?
+  explanation   String?
+  changeNotes   String?
+  createdById   String      @db.Uuid
+  createdAt     DateTime    @default(now())
+
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([contentItemId, version])
+  @@index([contentItemId])
+}
+
+model ContentReview {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  contentItemId  String       @db.Uuid
+  reviewedById   String       @db.Uuid
+  reviewType     String       // "ai_check" | "human_review"
+  status         ReviewStatus
+  notes          String?
+  aiCheckResults Json?        // Quality check JSON from GPT
+  createdAt      DateTime     @default(now())
+
+  contentItem    ContentItem  @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  reviewedBy     User         @relation(fields: [reviewedById], references: [id])
+
+  @@index([contentItemId])
+}
+
+// ============================================================
+// ASSIGNMENTS
+// ============================================================
+
+model Assignment {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String?      @db.Uuid
+  classId         String?      @db.Uuid
+  teacherId       String       @db.Uuid
+  title           String
+  description     String?
+  instructions    String?
+  dueAt           DateTime?
+  availableFrom   DateTime?
+  maxAttempts     Int          @default(1)
+  timeLimit       Int?         // minutes
+  isPublished     Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  class           Class?        @relation(fields: [classId], references: [id])
+  teacher         User          @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  items           AssignmentItem[]
+  submissions     Submission[]
+
+  @@index([organizationId])
+  @@index([classId])
+}
+
+model AssignmentItem {
+  id              String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  assignmentId    String      @db.Uuid
+  contentItemId   String      @db.Uuid
+  order           Int
+  rubricOverride  Json?       // Custom rubric for this assignment item
+  createdAt       DateTime    @default(now())
+
+  assignment      Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  contentItem     ContentItem @relation(fields: [contentItemId], references: [id])
+
+  @@index([assignmentId])
+}
+
+// ============================================================
+// SUBMISSIONS
+// ============================================================
+
+model Submission {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId          String           @db.Uuid
+  organizationId  String?          @db.Uuid
+  assignmentId    String?          @db.Uuid
+  contentItemId   String?          @db.Uuid
+  contentVersion  Int?
+
+  type            SubmissionType
+  status          SubmissionStatus @default(SUBMITTED)
+
+  // Writing
+  inputText       String?
+  wordCount       Int?
+
+  // Speaking
+  transcript      String?
+  audioDurationSeconds Float?
+  wordsPerMinute  Float?
+  longPauseCount  Int?
+  fillerWordCount Int?
+  selfCorrectionCount Int?
+  pronunciationScore Float?
+
+  // Reading/Listening answers
+  answers         Json?            // { questionId: answer }
+  timeTakenSeconds Int?
+
+  // CEFR
+  cefrInput       String?
+
+  attemptNumber   Int              @default(1)
+  ipAddress       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  organization    Organization?    @relation(fields: [organizationId], references: [id])
+  assignment      Assignment?      @relation(fields: [assignmentId], references: [id])
+  files           SubmissionFile[]
+  scores          Score[]
+  feedback        Feedback[]
+  aiJobs          AIJob[]
+
+  @@index([userId])
+  @@index([assignmentId])
+  @@index([organizationId])
+  @@index([type, status])
+}
+
+model SubmissionFile {
+  id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submissionId    String     @db.Uuid
+  fileType        String     // "audio" | "document" | "image"
+  blobUrl         String
+  blobPath        String
+  fileName        String
+  mimeType        String
+  fileSizeBytes   Int?
+  durationSeconds Float?
+  createdAt       DateTime   @default(now())
+
+  submission      Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+// ============================================================
+// SCORES & FEEDBACK
+// ============================================================
+
+model Score {
+  id                  String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submissionId        String      @db.Uuid
+  teacherId           String?     @db.Uuid
+
+  aiOverallScore      Float?
+  teacherOverallScore Float?
+  finalScore          Float?
+  cefrLevel           CEFRLevel?
+
+  criteriaScores      Json?       // { task_achievement: 6.0, coherence: 6.5, ... }
+  confidence          Float?
+  overrideReason      String?
+  criteriaAdjustments Json?       // Teacher's per-criteria changes
+  scoredByModel       String?
+  aiJobId             String?     @db.Uuid
+  isTeacherOverride   Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  submission          Submission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  teacher             User?       @relation("TeacherScores", fields: [teacherId], references: [id])
+
+  @@index([submissionId])
+}
+
+model Feedback {
+  id               String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submissionId     String     @db.Uuid
+  feedbackVersion  Int        @default(1)
+
+  strengths        String[]   @default([])
+  weaknesses       String[]   @default([])
+  sentenceFeedback Json?      // Array of { original, issue, suggestion, category }
+  wordLevelIssues  Json?      // Array of { word, issue, timestamp }
+  improvedVersion  String?
+  modelAnswer      String?
+  nextPractice     Json?      // Array of recommended content
+  studyPlanItems   Json?
+
+  teacherComments  String?
+  createdAt        DateTime   @default(now())
+
+  submission       Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+// ============================================================
+// STUDENT SKILL PROFILES
+// ============================================================
+
+model StudentSkillProfile {
+  id                 String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId             String     @unique @db.Uuid
+  estimatedCefr      CEFRLevel?
+  cefrConfidence     Float?
+  estimatedBand      Float?
+  bandConfidence     Float?
+
+  writingBand        Float?
+  speakingBand       Float?
+  readingBand        Float?
+  listeningBand      Float?
+
+  weakSkills         String[]   @default([])
+  weakGrammarAreas   String[]   @default([])
+  weakVocabAreas     String[]   @default([])
+
+  streakDays         Int        @default(0)
+  lastActivityAt     DateTime?
+  totalPracticeHours Float      @default(0)
+  totalSubmissions   Int        @default(0)
+
+  studyPlan          Json?
+  recommendations    Json?
+
+  updatedAt          DateTime   @updatedAt
+
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// AI JOBS
+// ============================================================
+
+model AIJob {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submissionId    String?      @db.Uuid
+  organizationId  String?      @db.Uuid
+  jobType         AIJobType
+  status          AIJobStatus  @default(PENDING)
+  priority        Int          @default(5)
+
+  inputData       Json?
+  outputData      Json?
+  errorMessage    String?
+
+  modelDeployment String?
+  inputTokens     Int?
+  outputTokens    Int?
+  costUsd         Float?
+
+  attemptCount    Int          @default(0)
+  maxAttempts     Int          @default(3)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+
+  submission      Submission?  @relation(fields: [submissionId], references: [id])
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  logs            AIJobLog[]
+
+  @@index([status, jobType])
+  @@index([submissionId])
+  @@index([organizationId])
+}
+
+model AIJobLog {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  jobId     String   @db.Uuid
+  level     String   // "info" | "warn" | "error"
+  message   String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  job       AIJob    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
+// ============================================================
+// EMBEDDINGS (vector search)
+// ============================================================
+
+model EmbeddingRecord {
+  id              String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  contentItemId   String      @db.Uuid
+  chunkIndex      Int         @default(0)
+  chunkText       String
+  embeddingModel  String
+  // embedding    Unsupported("vector(1536)")  // Uncomment when pgvector extension active
+  createdAt       DateTime    @default(now())
+
+  contentItem     ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+}
+
+// ============================================================
+// BILLING & SUBSCRIPTIONS
+// ============================================================
+
+model Plan {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                  String
+  tier                  PlanTier
+  stripePriceId         String?
+  stripeProductId       String?
+
+  monthlyPriceCents     Int?
+  annualPriceCents      Int?
+  seatLimit             Int?       // null = unlimited
+  storageGb             Int?
+
+  writingChecksMonthly  Int?
+  speakingMinutesMonthly Int?
+  aiCreditsMonthly      Int?
+  contentImportsMonthly Int?
+
+  canPrivateContent     Boolean    @default(false)
+  canBrandedReports     Boolean    @default(false)
+  canBulkImport         Boolean    @default(false)
+  canTeacherOverride    Boolean    @default(false)
+  canApiAccess          Boolean    @default(false)
+  canSso                Boolean    @default(false)
+  canWhiteLabel         Boolean    @default(false)
+
+  isActive              Boolean    @default(true)
+  createdAt             DateTime   @default(now())
+
+  organizations         Organization[]
+  subscriptions         Subscription[]
+}
+
+model Subscription {
+  id                 String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String             @db.Uuid
+  planId             String             @db.Uuid
+  status             SubscriptionStatus @default(TRIALING)
+  stripeSubId        String?
+  stripeCustomerId   String?
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  trialEndsAt        DateTime?
+  cancelledAt        DateTime?
+
+  seatCount          Int                @default(1)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  organization       Organization       @relation(fields: [organizationId], references: [id])
+  plan               Plan               @relation(fields: [planId], references: [id])
+  usageRecords       UsageRecord[]
+
+  @@index([organizationId])
+}
+
+model UsageRecord {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  subscriptionId String       @db.Uuid
+  userId         String?      @db.Uuid
+  feature        String       // "writing_check" | "speaking_minute" | "ai_credit" | "import"
+  quantity       Float        @default(1)
+  metadata       Json?
+  recordedAt     DateTime     @default(now())
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId])
+  @@index([feature, recordedAt])
+}
+
+// ============================================================
+// CERTIFICATES
+// ============================================================
+
+model Certificate {
+  id               String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String            @db.Uuid
+  organizationId   String?           @db.Uuid
+  submissionId     String?           @db.Uuid
+
+  certificateType  String            // "cefr_placement" | "ielts_readiness" | "course_completion"
+  cefrLevel        CEFRLevel?
+  estimatedBand    Float?
+  title            String
+  issuerName       String            @default("Ikhora Fluent")
+
+  verifyToken      String            @unique @default(dbgenerated("uuid_generate_v4()"))
+  verifyUrl        String?
+  pdfUrl           String?
+
+  status           CertificateStatus @default(ISSUED)
+  issuedAt         DateTime          @default(now())
+  expiresAt        DateTime?
+  revokedAt        DateTime?
+  revokedReason    String?
+
+  user             User              @relation(fields: [userId], references: [id])
+  organization     Organization?     @relation(fields: [organizationId], references: [id])
+
+  @@index([userId])
+  @@index([verifyToken])
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+
+model Report {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String?  @db.Uuid
+  userId         String?  @db.Uuid
+  classId        String?  @db.Uuid
+  reportType     String   // "student" | "class" | "org" | "ai_usage"
+  title          String
+  data           Json
+  pdfUrl         String?
+  generatedAt    DateTime @default(now())
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id             String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  actorId        String?     @db.Uuid
+  organizationId String?     @db.Uuid
+  action         AuditAction
+  targetType     String?     // "user" | "content" | "submission" | "score" | "certificate"
+  targetId       String?     @db.Uuid
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime    @default(now())
+
+  actor          User?        @relation(fields: [actorId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([actorId])
+  @@index([organizationId])
+  @@index([action, createdAt])
+}

@@ -1,0 +1,307 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   IKHORA FLUENT DESIGN SYSTEM
+   Premium, Minimal, Black & White, Enterprise B2B
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* Brand Colors — HSL (Grayscale) */
+    --brand-50: 0 0% 98%;
+    --brand-100: 0 0% 96%;
+    --brand-200: 0 0% 90%;
+    --brand-300: 0 0% 83%;
+    --brand-400: 0 0% 64%;
+    --brand-500: 0 0% 45%;
+    --brand-600: 0 0% 32%;
+    --brand-700: 0 0% 25%;
+    --brand-800: 0 0% 15%;
+    --brand-900: 0 0% 9%;
+    --brand-950: 0 0% 4%;
+
+    /* Accent — Silver Violet */
+    --accent-50: 250 10% 98%;
+    --accent-100: 250 10% 95%;
+    --accent-200: 250 15% 90%;
+    --accent-300: 250 15% 80%;
+    --accent-400: 250 20% 60%;
+    --accent-500: 250 20% 45%;
+    --accent-600: 250 20% 35%;
+    --accent-700: 250 20% 25%;
+    --accent-800: 250 20% 15%;
+    --accent-900: 250 20% 8%;
+
+    /* Semantic Colors (dark mode default) */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 250 20% 15%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 25%;
+
+    --radius: 0.5rem;
+
+    /* Card styling */
+    --glass-bg: hsl(0, 0%, 6%);
+    --glass-border: hsl(0, 0%, 15%);
+    --glass-blur: blur(0px);
+
+    /* Glow effects - removed for minimal look */
+    --glow-primary: none;
+    --glow-accent: none;
+    --glow-danger: none;
+
+    /* IELTS Band Colors - Muted */
+    --band-low: 0 40% 45%;      /* muted red */
+    --band-mid: 35 40% 50%;     /* muted amber */
+    --band-high: 150 30% 45%;   /* muted green */
+
+    /* CEFR Level Colors - Muted Grayscale */
+    --cefr-a1: 0 0% 30%;
+    --cefr-a2: 0 0% 40%;
+    --cefr-b1: 0 0% 50%;
+    --cefr-b2: 0 0% 60%;
+    --cefr-c1: 0 0% 70%;
+    --cefr-c2: 0 0% 85%;
+  }
+
+  /* Light mode override (optional - platform is dark-first) */
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 40%;
+    --border: 0 0% 90%;
+    --input: 0 0% 92%;
+    --glass-bg: hsl(0, 0%, 100%);
+    --glass-border: hsl(0, 0%, 90%);
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  code, pre, kbd {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground; }
+
+  /* Selection */
+  ::selection { @apply bg-primary/20 text-foreground; }
+}
+
+/* ============================================================
+   COMPONENT UTILITIES
+   ============================================================ */
+
+@layer components {
+
+  /* === PREMIUM CARD === */
+  .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+  .glass-card-hover:hover {
+    border-color: hsl(0, 0%, 30%);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* === GRADIENT TEXT (Restrained to silver) === */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(0, 0%, 98%) 0%, hsl(0, 0%, 65%) 100%);
+  }
+
+  .gradient-text-green {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(150, 30%, 60%) 0%, hsl(150, 30%, 40%) 100%);
+  }
+
+  /* === PRIMARY BUTTON === */
+  .btn-gradient {
+    @apply relative overflow-hidden font-medium transition-all duration-300 bg-primary text-primary-foreground hover:bg-primary/90;
+    border-radius: var(--radius);
+  }
+
+  /* === BAND SCORE DISPLAY === */
+  .band-score {
+    @apply font-bold tabular-nums;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .band-low { color: hsl(var(--band-low)); }
+  .band-mid { color: hsl(var(--band-mid)); }
+  .band-high { color: hsl(var(--band-high)); }
+
+  /* === CEFR BADGE === */
+  .cefr-badge {
+    @apply inline-flex items-center justify-center rounded-md px-2.5 py-0.5 text-xs font-semibold tracking-wide border;
+  }
+  .cefr-a1 { background: hsl(0 0% 12%); color: hsl(var(--cefr-a1)); border-color: hsl(0 0% 20%); }
+  .cefr-a2 { background: hsl(0 0% 12%); color: hsl(var(--cefr-a2)); border-color: hsl(0 0% 25%); }
+  .cefr-b1 { background: hsl(0 0% 15%); color: hsl(var(--cefr-b1)); border-color: hsl(0 0% 30%); }
+  .cefr-b2 { background: hsl(0 0% 15%); color: hsl(var(--cefr-b2)); border-color: hsl(0 0% 35%); }
+  .cefr-c1 { background: hsl(0 0% 18%); color: hsl(var(--cefr-c1)); border-color: hsl(0 0% 40%); }
+  .cefr-c2 { background: hsl(0 0% 20%); color: hsl(var(--cefr-c2)); border-color: hsl(0 0% 50%); }
+
+  /* === SKILL CHIP === */
+  .skill-chip {
+    @apply inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium border bg-secondary text-secondary-foreground border-border;
+  }
+
+  /* === NAV ITEM === */
+  .nav-item {
+    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary;
+  }
+  .nav-item.active {
+    @apply bg-secondary text-foreground;
+    position: relative;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60%;
+    width: 2px;
+    background-color: hsl(var(--foreground));
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* === FEEDBACK CARD === */
+  .feedback-issue { @apply rounded-md p-3 text-sm border bg-red-950/20 border-red-900/30; }
+  .feedback-strength { @apply rounded-md p-3 text-sm border bg-emerald-950/20 border-emerald-900/30; }
+  .feedback-suggestion { @apply rounded-md p-3 text-sm border bg-secondary border-border; }
+
+  /* === STAT CARD === */
+  .stat-card {
+    @apply glass-card p-6 flex flex-col justify-between;
+  }
+
+  /* === LOADING SHIMMER === */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.03) 25%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.03) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* === PAGE HEADER === */
+  .page-header {
+    @apply mb-10 border-b border-border pb-6;
+  }
+  .page-header h1 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  .page-header p {
+    @apply mt-2 text-muted-foreground text-sm;
+  }
+
+  /* === STATUS BADGES === */
+  .status-draft { @apply rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-secondary text-muted-foreground border border-border; }
+  .status-processing { @apply rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-950/40 text-amber-500 border border-amber-900/40; }
+  .status-approved { @apply rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-950/40 text-emerald-500 border border-emerald-900/40; }
+  .status-rejected { @apply rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-red-950/40 text-red-500 border border-red-900/40; }
+  .status-published { @apply rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-zinc-800 text-zinc-300 border border-zinc-700; }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fade-up 0.4s ease-out forwards;
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Stagger children animations */
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+}

@@ -1,0 +1,102 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  LayoutDashboard, PenTool, Mic2, BookOpen, Headphones,
+  BarChart3, Target, Sparkles, Settings, LogOut, Bell, User,
+  Video, BookMarked,
+} from 'lucide-react'
+
+const STUDENT_NAV = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Writing Coach', href: '/writing', icon: PenTool },
+  { label: 'Speaking Practice', href: '/speaking', icon: Mic2 },
+  { label: 'Reading Practice', href: '/reading', icon: BookOpen },
+  { label: 'Listening Practice', href: '/listening', icon: Headphones },
+  { label: 'Classroom', href: '/classroom', icon: Video },
+  { label: 'Vocabulary Hub', href: '/vocabulary', icon: BookMarked },
+  { label: 'CEFR Hub', href: '/cefr', icon: Target },
+  { label: 'Study Plan', href: '/study-plan', icon: Sparkles },
+  { label: 'Progress & Reports', href: '/reports', icon: BarChart3 },
+]
+
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      {/* ── SIDEBAR ── */}
+      <aside className="fixed left-0 top-0 h-full w-60 flex flex-col z-40 border-r border-border bg-background">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border flex-shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="var(--primary-foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <div className="font-bold text-sm leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Ikhora Fluent
+            </div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Student Portal</div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+          {STUDENT_NAV.map((item) => {
+            const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${active ? 'active' : ''}`}
+              >
+                <item.icon className="h-4 w-4 flex-shrink-0" />
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="border-t border-border p-2 space-y-0.5 flex-shrink-0">
+          <Link href="/settings" className="nav-item">
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+          <button className="nav-item w-full text-left text-muted-foreground hover:text-foreground">
+            <LogOut className="h-4 w-4" />
+            <span>Sign out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MAIN ── */}
+      <div className="flex-1 pl-60 min-w-0">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 flex h-13 items-center justify-between border-b border-border px-6 py-3 bg-background">
+          <div className="text-sm text-muted-foreground">
+            Good morning, <span className="text-foreground font-medium">Student</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="relative h-8 w-8 flex items-center justify-center rounded-md hover:bg-secondary transition-colors">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+            </button>
+            <button className="flex items-center gap-2 rounded-md px-2.5 py-1.5 hover:bg-secondary transition-colors">
+              <div className="h-7 w-7 rounded-md bg-secondary border border-border flex items-center justify-center">
+                <User className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <span className="text-sm font-medium">Student</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="p-6 min-w-0">{children}</main>
+      </div>
+    </div>
+  )
+}

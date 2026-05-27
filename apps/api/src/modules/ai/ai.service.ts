@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { AzureOpenAI } from '@azure/openai'
+import { AzureOpenAI } from 'openai'
 import type { WritingFeedbackJSON, CEFRCheckResult, ContentQualityCheck } from '@ikhora/shared'
 
 @Injectable()

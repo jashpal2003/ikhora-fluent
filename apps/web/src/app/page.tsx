@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { PenTool, Mic2, BookOpen, Target, Users, Building2, BarChart3, Sparkles, Award, ArrowRight } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/config'
 
 const NAV_LINKS = [
   { label: 'IELTS Writing', href: '/ielts' },
@@ -15,6 +18,31 @@ const NAV_LINKS = [
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
+  const router = useRouter()
+
+  // Smart redirect: if user is already logged in, send them to their dashboard
+  useEffect(() => {
+    async function checkAuth() {
+      if (!isSupabaseConfigured()) return
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Check org memberships for role
+      const { data: members } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('status', 'ACTIVE')
+
+      const roles = (members ?? []).map((m: any) => m.role)
+      if (roles.includes('ORG_ADMIN')) router.replace('/institute')
+      else if (roles.includes('TEACHER')) router.replace('/teacher')
+      else router.replace('/dashboard')
+    }
+    checkAuth()
+  }, [router])
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)

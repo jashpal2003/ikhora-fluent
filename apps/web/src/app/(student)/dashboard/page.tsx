@@ -326,7 +326,7 @@ export default function DashboardPage() {
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            {greeting}, {loading ? '...' : 'Alex'}
+            {greeting}, {loading ? '...' : (data?.userName ?? 'Student')}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {loading ? 'Loading your progress...' : `${data?.streakDays ?? 0}-day streak — keep it going.`}

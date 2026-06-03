@@ -25,7 +25,10 @@ import { StorageModule } from './modules/storage/storage.module'
 @Module({
   imports: [
     // Config
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.local', '.env'] }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '../../.env', '.env'],
+    }),
 
     // Rate limiting
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),

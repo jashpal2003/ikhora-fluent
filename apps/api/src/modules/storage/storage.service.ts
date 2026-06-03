@@ -23,9 +23,10 @@ export class StorageService {
       `https://${this.accountName}.blob.core.windows.net`,
       this.credential,
     )
-    this.containers.audio = config.get('AZURE_STORAGE_CONTAINER_AUDIO') || 'ikhora-audio'
-    this.containers.documents = config.get('AZURE_STORAGE_CONTAINER_DOCUMENTS') || 'ikhora-documents'
-    this.containers.reports = config.get('AZURE_STORAGE_CONTAINER_REPORTS') || 'ikhora-reports'
+    // All containers default to "ikhoradata" (single-container setup)
+    this.containers.audio = config.get('AZURE_STORAGE_CONTAINER_AUDIO') || 'ikhoradata'
+    this.containers.documents = config.get('AZURE_STORAGE_CONTAINER_DOCUMENTS') || 'ikhoradata'
+    this.containers.reports = config.get('AZURE_STORAGE_CONTAINER_REPORTS') || 'ikhoradata'
   }
 
   /**
@@ -39,7 +40,9 @@ export class StorageService {
   }): Promise<{ uploadUrl: string; blobPath: string; expiresAt: string }> {
     const containerName = this.containers[params.containerType]
     const ext = params.fileName.split('.').pop() || 'bin'
-    const blobPath = `${params.userId}/${uuidv4()}.${ext}`
+    // Organize by type subdirectory within single container
+    const typePrefix = params.containerType === 'audio' ? 'audio' : params.containerType === 'documents' ? 'docs' : 'reports'
+    const blobPath = `${typePrefix}/${params.userId}/${uuidv4()}.${ext}`
     const expiryMinutes = params.expiryMinutes || 15
 
     const expiresAt = new Date()

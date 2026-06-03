@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isSupabaseConfigured } from '@/lib/config'
 
 // Protected routes that require authentication
 const PROTECTED_PREFIXES = [
@@ -12,6 +13,7 @@ const PROTECTED_PREFIXES = [
   '/study-plan',
   '/reports',
   '/settings',
+  '/classroom',
   '/mock-test',
   '/teacher',
   '/institute',
@@ -24,20 +26,12 @@ const AUTH_ROUTES = ['/login', '/register']
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  const supabaseConfigured = !!(
-    supabaseUrl &&
-    supabaseUrl.includes('.supabase.co') &&
-    supabaseAnonKey &&
-    supabaseAnonKey !== 'YOUR_ANON_PUBLIC_KEY' &&
-    !supabaseUrl.includes('YOUR_PROJECT_ID')
-  )
-
-  if (!supabaseConfigured) {
+  if (!isSupabaseConfigured()) {
     return supabaseResponse
   }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
   const supabase = createServerClient(
     supabaseUrl,
@@ -69,12 +63,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect authenticated users away from auth routes
+  // Redirect authenticated users away from auth routes to home (which handles role routing)
   const isAuthRoute = AUTH_ROUTES.some((p) => pathname.startsWith(p))
   if (isAuthRoute && user) {
-    const dashboardUrl = request.nextUrl.clone()
-    dashboardUrl.pathname = '/dashboard'
-    return NextResponse.redirect(dashboardUrl)
+    const homeUrl = request.nextUrl.clone()
+    homeUrl.pathname = '/'
+    return NextResponse.redirect(homeUrl)
   }
 
   return supabaseResponse

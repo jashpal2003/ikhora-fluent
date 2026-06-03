@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Loader2, AlertCircle, BookOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getDashboardUrl } from '@/lib/hooks/useUser'
+import { isSupabaseConfigured } from '@/lib/config'
 
 function LoginForm() {
   const router = useRouter()
@@ -18,11 +20,11 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(errorParam ?? null)
 
-  const supabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('.supabase.co')
+  const supabaseReady = isSupabaseConfigured()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!supabaseConfigured) {
+    if (!supabaseReady) {
       // Demo mode — just redirect to dashboard
       router.push(redirectTo)
       return
@@ -40,12 +42,31 @@ function LoginForm() {
       return
     }
 
-    router.push(redirectTo)
+    // Redirect based on user role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('global_role')
+      .eq('id', (await supabase.auth.getUser()).data.user!.id)
+      .single()
+
+    const { data: memberData } = await supabase
+      .from('organization_members')
+      .select('role')
+      .eq('user_id', (await supabase.auth.getUser()).data.user!.id)
+      .eq('status', 'ACTIVE')
+
+    let role = 'student'
+    if (userData && (userData as any).global_role === 'super_admin') role = 'admin'
+    else if (memberData?.some((m: any) => m.role === 'ORG_ADMIN')) role = 'institute_admin'
+    else if (memberData?.some((m: any) => m.role === 'TEACHER')) role = 'teacher'
+
+    const target = searchParams.get('redirectTo') ?? getDashboardUrl(role as any)
+    router.push(target)
     router.refresh()
   }
 
   async function handleGoogleLogin() {
-    if (!supabaseConfigured) {
+    if (!supabaseReady) {
       router.push(redirectTo)
       return
     }
@@ -77,7 +98,7 @@ function LoginForm() {
             Sign in to continue your IELTS preparation
           </p>
 
-          {!supabaseConfigured && (
+          {!supabaseReady && (
             <div className="flex items-start gap-2 p-3 rounded-md bg-amber-400/10 border border-amber-400/20 text-amber-400 text-sm mb-5">
               <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span>Demo mode — Supabase not configured. Click Sign In to enter as demo user.</span>
@@ -120,7 +141,9 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                required={supabaseConfigured}
+                required
+                aria-label="Email address"
+                autoComplete="email"
                 className="w-full px-3 py-2.5 rounded-md bg-secondary border border-border text-sm focus:outline-none focus:border-foreground/40 transition-colors placeholder:text-muted-foreground/50"
               />
             </div>
@@ -139,13 +162,16 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required={supabaseConfigured}
+                  required
+                  aria-label="Password"
+                  autoComplete="current-password"
                   className="w-full px-3 py-2.5 pr-10 rounded-md bg-secondary border border-border text-sm focus:outline-none focus:border-foreground/40 transition-colors placeholder:text-muted-foreground/50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

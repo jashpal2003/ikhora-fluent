@@ -14,9 +14,9 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     Promise.all([
-      getTeacherClasses('teacher-001'),
-      getTeacherAssignments('teacher-001'),
-      getPendingReviews('teacher-001'),
+      getTeacherClasses(),
+      getTeacherAssignments(),
+      getPendingReviews(),
     ])
       .then(([cls, asgn, reviews]) => {
         setClasses(cls)

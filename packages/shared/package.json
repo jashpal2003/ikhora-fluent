@@ -2,13 +2,32 @@
   "name": "@ikhora/shared",
   "version": "1.0.0",
   "private": true,
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./constants": "./src/constants/index.ts",
-    "./types": "./src/types/index.ts",
-    "./utils": "./src/utils/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./src/index.ts"
+    },
+    "./constants": {
+      "import": "./dist/constants/index.js",
+      "require": "./dist/constants/index.js",
+      "types": "./src/constants/index.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.js",
+      "types": "./src/types/index.ts"
+    },
+    "./utils": {
+      "import": "./dist/utils/index.js",
+      "require": "./dist/utils/index.js",
+      "types": "./src/utils/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
   },
   "devDependencies": {
     "typescript": "^5.4.5"

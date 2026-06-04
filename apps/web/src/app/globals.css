@@ -302,4 +302,13 @@
   .stagger-children > *:nth-child(4) { animation-delay: 120ms; }
   .stagger-children > *:nth-child(5) { animation-delay: 160ms; }
   .stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari, Opera */
+  }
 }

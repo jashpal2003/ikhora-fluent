@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
-  Headphones, CheckCircle2, AlertCircle, RotateCcw, Volume2, VolumeX,
+  Headphones, CheckCircle2, AlertCircle, RotateCcw, Volume2,
   Clock, ChevronRight, Play, Pause, SkipForward, FileText, Eye, EyeOff
 } from 'lucide-react'
 import type { ListeningSection } from '@/lib/types'
@@ -217,13 +217,13 @@ function AudioPlayer({
       {isPlaying && (
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
-            {[0, 150, 300, 450, 200].map((delay, i) => (
+            {[12, 18, 10, 20, 14].map((h, i) => (
               <div
                 key={i}
                 className="w-1 bg-amber-400 rounded-full animate-bounce"
                 style={{
-                  animationDelay: `${delay}ms`,
-                  height: `${8 + Math.random() * 12}px`,
+                  animationDelay: `${[0, 150, 300, 450, 200][i]}ms`,
+                  height: `${h}px`,
                 }}
               />
             ))}
@@ -281,13 +281,6 @@ export default function ListeningPracticePage() {
     return () => clearInterval(interval)
   }, [timerActive, timeLeft])
 
-  // Auto-submit when timer runs out
-  useEffect(() => {
-    if (step === 'listen' && timeLeft === 0 && timerActive && selected) {
-      handleSubmit()
-    }
-  }, [timeLeft, timerActive, step, selected])
-
   const handleSelect = (s: ListeningSection) => {
     setSelected(s)
     setAnswers({})
@@ -303,10 +296,11 @@ export default function ListeningPracticePage() {
     setNotAllAnswered(false)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback((forceSubmit = false) => {
     if (!selected) return
     const answered = selected.questions.filter((q) => answers[q.id]?.trim())
-    if (answered.length < selected.questions.length) {
+    // In normal submission: require all answers. On timer expiry (forceSubmit): submit whatever is answered.
+    if (!forceSubmit && answered.length < selected.questions.length) {
       setNotAllAnswered(true)
       return
     }
@@ -325,7 +319,14 @@ export default function ListeningPracticePage() {
 
     setScoreData(score)
     setStep('result')
-  }
+  }, [selected, answers, timeLeft])
+
+  // Auto-submit when timer runs out — force-submit with whatever answers exist
+  useEffect(() => {
+    if (step === 'listen' && timeLeft === 0 && timerActive && selected) {
+      handleSubmit(true)
+    }
+  }, [timeLeft, timerActive, step, selected, handleSubmit])
 
   const handleReset = () => {
     setStep('select')
@@ -576,7 +577,7 @@ export default function ListeningPracticePage() {
           )}
 
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={answeredCount === 0}
             className="w-full py-3.5 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >

@@ -32,8 +32,41 @@ export default function AdminAuditLogsPage() {
 
       <div className="glass-card overflow-hidden">
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-muted-foreground uppercase tracking-wider border-b border-border"><th className="px-5 py-3">Actor</th><th className="px-4 py-3">Action</th><th className="px-4 py-3">Resource</th><th className="px-4 py-3">Diff</th><th className="px-4 py-3">Time</th></tr></thead>
-          <tbody className="divide-y divide-border/30">{logs.map((log) => <tr key={log.id} className="hover:bg-secondary/30"><td className="px-5 py-3.5"><div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" /><div><div className="font-medium">{log.actorId}</div><div className="text-xs text-muted-foreground">{log.actorRole}</div></div></div></td><td className="px-4 py-3.5 font-medium">{log.action.replace(/_/g, ' ')}</td><td className="px-4 py-3.5 text-muted-foreground">{log.resourceType}:{log.resourceId}</td><td className="px-4 py-3.5 text-xs text-muted-foreground">{log.before ? JSON.stringify(log.before) : 'created'} -> {log.after ? JSON.stringify(log.after) : 'logged'}</td><td className="px-4 py-3.5 text-xs text-muted-foreground"><FileClock className="h-3.5 w-3.5 inline mr-1" />{new Date(log.timestamp).toLocaleString()}</td></tr>)}</tbody>
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground uppercase tracking-wider border-b border-border">
+              <th className="px-5 py-3">Actor</th>
+              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Resource</th>
+              <th className="px-4 py-3">Diff</th>
+              <th className="px-4 py-3">Time</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/30">
+            {logs.map((log) => (
+              <tr key={log.id} className="hover:bg-secondary/30">
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">{log.actorId}</div>
+                      <div className="text-xs text-muted-foreground">{log.actorRole}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3.5 font-medium">{log.action.replace(/_/g, ' ')}</td>
+                <td className="px-4 py-3.5 text-muted-foreground">{log.resourceType}:{log.resourceId}</td>
+                <td className="px-4 py-3.5 text-xs text-muted-foreground">
+                  {log.before ? JSON.stringify(log.before) : 'created'}
+                  {' → '}
+                  {log.after ? JSON.stringify(log.after) : 'logged'}
+                </td>
+                <td className="px-4 py-3.5 text-xs text-muted-foreground">
+                  <FileClock className="h-3.5 w-3.5 inline mr-1" />
+                  {new Date(log.timestamp).toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </div>

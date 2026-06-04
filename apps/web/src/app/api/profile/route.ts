@@ -70,10 +70,10 @@ export async function PATCH(request: Request) {
 
     const results = await Promise.all([
       Object.keys(updates).length > 0
-        ? supabase.from('profiles').update(updates as any).eq('id', user.id)
+        ? (supabase.from('profiles') as any).update(updates).eq('id', user.id)
         : Promise.resolve({ error: null }),
       Object.keys(studentUpdates).length > 1
-        ? supabase.from('student_profiles').update(studentUpdates as any).eq('user_id', user.id)
+        ? (supabase.from('student_profiles') as any).update(studentUpdates).eq('user_id', user.id)
         : Promise.resolve({ error: null }),
     ])
 

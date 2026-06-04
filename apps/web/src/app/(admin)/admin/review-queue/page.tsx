@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { getReviewQueue, approveContent, rejectContent } from '@/lib/services/adminService'
 import { CheckCircle2, XCircle, AlertCircle, ClipboardList } from 'lucide-react'
 
-type ReviewItem = Awaited<ReturnType<typeof getReviewQueue>>[0] & { _status?: 'approved' | 'rejected' }
+type ReviewItem = Awaited<ReturnType<typeof getReviewQueue>>[0] & { _status?: 'approved' | 'rejected'; submittedBy?: string; submittedAt?: string; aiQualityScore?: number; contentId?: string }
 
 export default function ReviewQueuePage() {
   const [items, setItems] = useState<ReviewItem[]>([])
@@ -20,7 +20,7 @@ export default function ReviewQueuePage() {
 
   const handleApprove = async (item: ReviewItem) => {
     setProcessingId(item.id)
-    await approveContent(item.contentId)
+    await approveContent(item.contentId ?? item.id)
     setItems((prev) => prev.map((i) => i.id === item.id ? { ...i, _status: 'approved' } : i))
     setProcessingId(null)
   }
@@ -28,7 +28,7 @@ export default function ReviewQueuePage() {
   const handleReject = async (item: ReviewItem) => {
     const reason = rejectReason[item.id] || 'Content does not meet quality standards.'
     setProcessingId(item.id)
-    await rejectContent(item.contentId, reason)
+    await rejectContent(item.contentId ?? item.id, reason)
     setItems((prev) => prev.map((i) => i.id === item.id ? { ...i, _status: 'rejected' } : i))
     setProcessingId(null)
   }
@@ -67,7 +67,7 @@ export default function ReviewQueuePage() {
                       <div>
                         <h3 className="text-sm font-semibold mb-1">{item.title}</h3>
                         <div className="text-xs text-muted-foreground capitalize">
-                          {item.skill} · Submitted by {item.submittedBy} · {new Date(item.submittedAt).toLocaleDateString()}
+                          {item.skill} · Submitted by {item.submittedBy ?? 'unknown'} · {item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : ''}
                         </div>
                         {item.aiQualityScore && (
                           <div className="text-xs text-muted-foreground mt-1">

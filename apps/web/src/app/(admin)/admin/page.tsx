@@ -166,10 +166,10 @@ export default function AdminOverview() {
               <div key={item.id} className="flex items-center gap-3 p-3 rounded-md border border-border/50 hover:bg-secondary transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{item.title}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{item.skill} · Submitted by {item.submittedBy}</div>
+                  <div className="text-xs text-muted-foreground capitalize">{item.skill} · Submitted by {'submittedBy' in item ? (item as any).submittedBy : item.createdBy}</div>
                 </div>
-                {item.aiQualityScore && (
-                  <div className="text-xs text-muted-foreground tabular-nums">QC: {item.aiQualityScore}%</div>
+                {'aiQualityScore' in item && (item as any).aiQualityScore && (
+                  <div className="text-xs text-muted-foreground tabular-nums">QC: {(item as any).aiQualityScore}%</div>
                 )}
                 <div className="flex gap-2">
                   <button className="text-xs px-2 py-1 rounded border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 transition-colors">

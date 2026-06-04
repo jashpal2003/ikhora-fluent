@@ -47,9 +47,9 @@ export function createAdminSupabaseClient() {
   const { createClient } = require('@supabase/supabase-js')
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co'
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-role-key'
-  return createClient<Database>(
+  return createClient(
     url,
     key,
     { auth: { autoRefreshToken: false, persistSession: false } }
-  )
+  ) as ReturnType<typeof createClient>
 }

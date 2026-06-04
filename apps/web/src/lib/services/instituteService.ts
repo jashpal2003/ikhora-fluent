@@ -8,7 +8,7 @@
 
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Class, ContentItem, Skill } from '../types'
-import { SEED_CLASSES, SEED_CONTENT_ITEMS, SEED_ORGANIZATIONS } from '../data/organizationData'
+import { SEED_CLASSES, SEED_CONTENT_ITEMS } from '../data/organizationData'
 import { DEMO_STUDENT_PROFILE, DEMO_SUBMISSIONS } from '../data/studentData'
 
 function isSupabaseConfigured() {
@@ -223,7 +223,7 @@ export async function getInstituteClasses(): Promise<Class[]> {
 // ── CONTENT ─────────────────────────────────────────────────
 
 export async function getInstituteContent(): Promise<ContentItem[]> {
-  if (!isSupabaseConfigured()) return SEED_CONTENT_ITEMS.filter(i => i.visibility !== 'global' || true)
+  if (!isSupabaseConfigured()) return SEED_CONTENT_ITEMS
 
   try {
     const supabase = await createServerSupabaseClient()

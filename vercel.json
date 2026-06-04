@@ -1,5 +1,7 @@
 {
   "framework": "nextjs",
-  "buildCommand": "pnpm build",
-  "outputDirectory": "apps/web/.next"
+  "buildCommand": "pnpm turbo run build --filter=@ikhora/web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/web/ packages/"
 }

@@ -6,6 +6,7 @@ import type { SpeakingPrompt, ScoreReport } from '@/lib/types'
 import { getSpeakingPromptsByPart } from '@/lib/services/questionBankService'
 import { scoreSpeakingSubmission } from '@/lib/services/aiScoringService'
 import { savePracticeScore } from '@/lib/services/studentService'
+import { useUser } from '@/lib/hooks/useUser'
 
 type Step = 'select' | 'record' | 'processing' | 'result'
 type Part = 1 | 2 | 3
@@ -20,6 +21,7 @@ function getBandColor(band: number) {
 }
 
 export default function SpeakingPracticePage() {
+  const { profile } = useUser()
   const [step, setStep] = useState<Step>('select')
   const [part, setPart] = useState<Part>(1)
   const [prompts, setPrompts] = useState<SpeakingPrompt[]>([])
@@ -80,7 +82,7 @@ export default function SpeakingPracticePage() {
     
     // Save the score asynchronously
     savePracticeScore({
-      userId: '00000000-0000-0000-0000-000000000000', // Mock UUID for now
+      userId: profile?.id ?? '00000000-0000-0000-0000-000000000000',
       skill: 'speaking',
       score: report.finalBand,
       band: report.overallBand,

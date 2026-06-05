@@ -5,6 +5,9 @@ import { BookOpen, ChevronRight, Clock, AlertCircle, CheckCircle2, RotateCcw } f
 import type { ReadingPassage, ReadingQuestion } from '@/lib/types'
 import { getReadingPassages, getReadingPassageById } from '@/lib/services/questionBankService'
 import { scoreReadingAttempt } from '@/lib/services/aiScoringService'
+import { savePracticeScore } from '@/lib/services/studentService'
+import { useUser } from '@/lib/hooks/useUser'
+import { useCallback } from 'react'
 
 // ── TYPES ─────────────────────────────────────────────────
 
@@ -30,6 +33,7 @@ const Q_TYPE_LABELS: Record<string, string> = {
 // ── MAIN PAGE ─────────────────────────────────────────────
 
 export default function ReadingPracticePage() {
+  const { profile } = useUser()
   const [step, setStep] = useState<Step>('select')
   const [passages, setPassages] = useState<ReadingPassage[]>([])
   const [selected, setSelected] = useState<ReadingPassage | null>(null)
@@ -66,19 +70,35 @@ export default function ReadingPracticePage() {
     setNotAllAnswered(false)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback((forceSubmit = false) => {
     if (!selected) return
     const answered = selected.questions.filter((q) => answers[q.id]?.trim())
-    if (answered.length < selected.questions.length) {
+    if (!forceSubmit && answered.length < selected.questions.length) {
       setNotAllAnswered(true)
       return
     }
     setTimerActive(false)
     const score = scoreReadingAttempt(selected.questions, answers)
+
+    savePracticeScore({
+      userId: profile?.id ?? '00000000-0000-0000-0000-000000000000',
+      skill: 'reading',
+      score: score.score,
+      band: score.band,
+      durationSeconds: selected.timeLimitMinutes * 60 - timeLeft,
+    })
+
     setScoreData(score)
     setSubmitted(true)
     setStep('result')
-  }
+  }, [selected, answers, timeLeft, profile])
+
+  // Auto-submit when timer runs out
+  useEffect(() => {
+    if (step === 'read' && timeLeft === 0 && timerActive && selected) {
+      handleSubmit(true)
+    }
+  }, [timeLeft, timerActive, step, selected, handleSubmit])
 
   const handleReset = () => {
     setStep('select')
@@ -180,7 +200,7 @@ export default function ReadingPracticePage() {
               )}
 
               <button
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 className="w-full py-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
               >
                 Submit Answers
@@ -317,14 +337,16 @@ function QuestionCard({
       )}
 
       {['short_answer', 'sentence_completion', 'note_completion', 'matching_headings'].includes(question.type) && (
-        <input
-          type="text"
-          value={answer}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={submitted}
-          placeholder="Type your answer..."
-          className="w-full mt-2 ml-7 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-foreground focus:ring-1 focus:ring-foreground disabled:cursor-default transition-all"
-        />
+        <div className="pl-7 mt-2">
+          <input
+            type="text"
+            value={answer}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={submitted}
+            placeholder="Type your answer..."
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-foreground focus:ring-1 focus:ring-foreground disabled:cursor-default transition-all"
+          />
+        </div>
       )}
     </div>
   )

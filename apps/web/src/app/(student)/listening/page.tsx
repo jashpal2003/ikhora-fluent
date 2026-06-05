@@ -9,6 +9,7 @@ import type { ListeningSection } from '@/lib/types'
 import { getListeningSections } from '@/lib/services/questionBankService'
 import { scoreListeningAttempt } from '@/lib/services/aiScoringService'
 import { savePracticeScore } from '@/lib/services/studentService'
+import { useUser } from '@/lib/hooks/useUser'
 
 // ── TYPES ──────────────────────────────────────────────────────
 
@@ -262,6 +263,7 @@ function AudioPlayer({
 // ── MAIN PAGE ──────────────────────────────────────────────────
 
 export default function ListeningPracticePage() {
+  const { profile } = useUser()
   const [step, setStep] = useState<Step>('select')
   const [sections, setSections] = useState<ListeningSection[]>([])
   const [selected, setSelected] = useState<ListeningSection | null>(null)
@@ -310,7 +312,7 @@ export default function ListeningPracticePage() {
     const score = scoreListeningAttempt(selected.questions, answers)
 
     savePracticeScore({
-      userId: '00000000-0000-0000-0000-000000000000',
+      userId: profile?.id ?? '00000000-0000-0000-0000-000000000000',
       skill: 'listening',
       score: score.score,
       band: score.band,
@@ -556,13 +558,15 @@ export default function ListeningPracticePage() {
                   )}
 
                   {q.type !== 'mcq' && (
-                    <input
-                      type="text"
-                      value={answers[q.id] ?? ''}
-                      onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                      placeholder="Type your answer here…"
-                      className="w-full ml-9 rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 transition-all placeholder:text-muted-foreground/60"
-                    />
+                    <div className="pl-9 mt-2">
+                      <input
+                        type="text"
+                        value={answers[q.id] ?? ''}
+                        onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                        placeholder="Type your answer here…"
+                        className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 transition-all placeholder:text-muted-foreground/60"
+                      />
+                    </div>
                   )}
                 </div>
               )

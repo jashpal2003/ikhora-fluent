@@ -22,8 +22,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'LiveKit credentials not configured' }, { status: 500 })
     }
 
+    // Identity must be unique in LiveKit, otherwise matching identities disconnect each other.
+    const participantIdentity = `${username}-${Math.random().toString(36).substring(2, 8)}`
+
     const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-      identity: username,
+      identity: participantIdentity,
       name: username,
       ttl: '4h',
     })

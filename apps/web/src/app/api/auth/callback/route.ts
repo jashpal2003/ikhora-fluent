@@ -1,18 +1,22 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { env } from '@/lib/config'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next')
 
+  // Use configured appUrl (e.g. production domain on Vercel) instead of local reverse-proxy origin
+  const baseRedirectUrl = env.appUrl || origin
+
   if (code) {
     const supabase = await createServerSupabaseClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       // If a specific redirect was requested, use it
-      if (next) return NextResponse.redirect(`${origin}${next}`)
+      if (next) return NextResponse.redirect(`${baseRedirectUrl}${next}`)
 
       // Otherwise determine the user's role and redirect accordingly
       try {
@@ -26,20 +30,20 @@ export async function GET(request: NextRequest) {
 
           const roles = (members ?? []).map((m: any) => m.role)
           if (roles.includes('ORG_ADMIN')) {
-            return NextResponse.redirect(`${origin}/institute`)
+            return NextResponse.redirect(`${baseRedirectUrl}/institute`)
           }
           if (roles.includes('TEACHER')) {
-            return NextResponse.redirect(`${origin}/teacher`)
+            return NextResponse.redirect(`${baseRedirectUrl}/teacher`)
           }
         }
       } catch {
         // Fall through to default redirect
       }
 
-      return NextResponse.redirect(`${origin}/dashboard`)
+      return NextResponse.redirect(`${baseRedirectUrl}/dashboard`)
     }
   }
 
   // Redirect to login on failure
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+  return NextResponse.redirect(`${baseRedirectUrl}/login?error=auth_callback_failed`)
 }

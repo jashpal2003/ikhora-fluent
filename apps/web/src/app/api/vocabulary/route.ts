@@ -5,23 +5,14 @@
  */
 
 import { NextResponse } from 'next/server'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-
-let cachedData: any = null
+import vocabularyData from '../../../../../../packages/database/vocab_data/vocabulary.json'
 
 export async function GET() {
   try {
-    if (!cachedData) {
-      // Path relative to the project root (monorepo)
-      const filePath = join(process.cwd(), '..', '..', 'packages', 'database', 'vocab_data', 'vocabulary.json')
-      const raw = readFileSync(filePath, 'utf-8')
-      cachedData = JSON.parse(raw)
-    }
-    return NextResponse.json(cachedData)
+    return NextResponse.json(vocabularyData)
   } catch (err) {
     console.error('[/api/vocabulary] Failed to load vocab data:', err)
-    // Return empty array if file not found
+    // Return empty array if error occurs
     return NextResponse.json([])
   }
 }

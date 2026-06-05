@@ -181,6 +181,66 @@ export async function scoreSpeakingSubmission(input: SpeakingScoringInput): Prom
   }
 }
 
+// ── GRADING UTILS ─────────────────────────────────────────
+
+export function evaluateAnswer(userAnsRaw: string, correctAnsRaw: string): { isCorrect: boolean; marks: number; maxMarks: number } {
+  const userAns = (userAnsRaw || '').trim().toLowerCase();
+  const correctAns = (correctAnsRaw || '').trim().toLowerCase();
+  
+  if (!userAns) return { isCorrect: false, marks: 0, maxMarks: 1 };
+  
+  // Helper to normalize an individual item (remove punctuation/articles)
+  const normalize = (str: string) => {
+    return str
+      .replace(/^(a|an|the)\s+/g, '') // remove leading articles
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '') // remove punctuation
+      .replace(/\s+/g, ' ') // normalize spaces
+      .trim();
+  };
+
+  const userNorm = normalize(userAns);
+
+  // 1. Alternative options separated by '/'
+  if (correctAns.includes('/')) {
+    const options = correctAns.split('/').map(opt => normalize(opt));
+    const matched = options.some(opt => opt === userNorm || (opt.length > 3 && (opt.includes(userNorm) || userNorm.includes(opt))));
+    return { isCorrect: matched, marks: matched ? 1 : 0, maxMarks: 1 };
+  }
+
+  // 2. Multi-part answer separated by ',' (e.g. "2019, Heritage" or "green, public transport")
+  if (correctAns.includes(',')) {
+    const parts = correctAns.split(',').map(p => normalize(p));
+    let correctCount = 0;
+    const userWords = userNorm.split(/\s+/);
+    
+    for (const part of parts) {
+      const matched = userNorm.includes(part) || userWords.some(w => w === part || (w.length > 3 && part.includes(w)));
+      if (matched) {
+        correctCount++;
+      }
+    }
+    
+    const maxMarks = parts.length;
+    return {
+      isCorrect: correctCount === maxMarks,
+      marks: correctCount,
+      maxMarks
+    };
+  }
+
+  // 3. Standard single answer
+  const correctNorm = normalize(correctAns);
+  if (userNorm === correctNorm) {
+    return { isCorrect: true, marks: 1, maxMarks: 1 };
+  }
+  
+  // Allow partial match for names or longer phrases, but avoid matching short random substrings
+  const isMatch = (correctNorm.includes(userNorm) && userNorm.length >= Math.min(4, correctNorm.length)) ||
+                  (userNorm.includes(correctNorm) && correctNorm.length >= Math.min(4, userNorm.length));
+                  
+  return { isCorrect: isMatch, marks: isMatch ? 1 : 0, maxMarks: 1 };
+}
+
 // ── READING SCORING ───────────────────────────────────────
 
 export function scoreReadingAttempt(
@@ -192,14 +252,12 @@ export function scoreReadingAttempt(
   const results: Record<string, boolean> = {}
 
   for (const q of questions) {
+    const evaluation = evaluateAnswer(answers[q.id], q.correctAnswer)
     total += q.marks
-    const userAnswer = (answers[q.id] || '').trim().toLowerCase()
-    const correct = q.correctAnswer.toLowerCase()
-    const isCorrect =
-      userAnswer === correct ||
-      (correct.includes(userAnswer) && userAnswer.length > 3)
-    if (isCorrect) score += q.marks
-    results[q.id] = isCorrect
+    // Scale marks proportionally to the question's base marks
+    const earnedMarks = Math.round((evaluation.marks / evaluation.maxMarks) * q.marks * 10) / 10
+    score += earnedMarks
+    results[q.id] = evaluation.isCorrect
   }
 
   const pct = total > 0 ? score / total : 0
@@ -211,7 +269,7 @@ export function scoreReadingAttempt(
   else if (pct >= 0.5) band = 6.0
   else if (pct >= 0.4) band = 5.5
 
-  return { score, total, band, results }
+  return { score: Math.round(score * 2) / 2, total, band, results }
 }
 
 // ── LISTENING SCORING ─────────────────────────────────────

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "prebuild": "pnpm --filter @ikhora/database db:generate",
+    "prebuild": "pnpm --filter @ikhora/database db:generate || echo 'Skipping Prisma generate'",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

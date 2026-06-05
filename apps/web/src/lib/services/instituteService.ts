@@ -303,22 +303,22 @@ export async function getInstituteBranding() {
     const orgId = memberships?.[0]?.organization_id
     if (!orgId) return SEED_INSTITUTE_BRANDING
 
-    const { data: org } = await (supabase
+    const { data: org } = await supabase
       .from('organizations')
-      .select('name, slug, branding_config')
+      .select('name, slug, primary_color, logo_url, website')
       .eq('id', orgId)
-      .single() as any)
+      .single()
 
     if (!org) return SEED_INSTITUTE_BRANDING
 
-    const config = org.branding_config as Record<string, string> | null
+    const o = org as Record<string, string | null>
     return {
-      brandName: org.name ?? SEED_INSTITUTE_BRANDING.brandName,
-      primaryColor: config?.primaryColor ?? SEED_INSTITUTE_BRANDING.primaryColor,
-      logoUrl: config?.logoUrl ?? '',
-      accentColor: config?.accentColor ?? SEED_INSTITUTE_BRANDING.accentColor,
-      website: config?.website ?? SEED_INSTITUTE_BRANDING.website,
-      contactEmail: config?.contactEmail ?? SEED_INSTITUTE_BRANDING.contactEmail,
+      brandName: o.name ?? SEED_INSTITUTE_BRANDING.brandName,
+      primaryColor: o.primary_color ?? SEED_INSTITUTE_BRANDING.primaryColor,
+      logoUrl: o.logo_url ?? '',
+      accentColor: SEED_INSTITUTE_BRANDING.accentColor,
+      website: o.website ?? SEED_INSTITUTE_BRANDING.website,
+      contactEmail: SEED_INSTITUTE_BRANDING.contactEmail,
     }
   } catch (err) {
     console.warn('[instituteService] getInstituteBranding failed:', err)
@@ -346,21 +346,21 @@ export async function getInstituteBilling() {
     const orgId = memberships?.[0]?.organization_id
     if (!orgId) return SEED_BILLING
 
-    const { data: org } = await (supabase
+    const { data: org } = await supabase
       .from('organizations')
-      .select('*, subscriptions(status, seat_count, plans(name, tier, price_monthly))')
+      .select('id, name, subscriptions(status, seat_count, plans(name, tier, monthly_price_cents))')
       .eq('id', orgId)
-      .single() as any)
+      .single()
 
     if (!org) return SEED_BILLING
 
-    const sub = Array.isArray(org.subscriptions) ? org.subscriptions[0] : org.subscriptions
+    const sub = Array.isArray((org as any).subscriptions) ? (org as any).subscriptions[0] : (org as any).subscriptions
     return {
       plan: (sub?.plans?.name ?? 'Institute Pro') as string,
       status: (sub?.status ?? 'active') as string,
       seats: sub?.seat_count ?? 120,
       usedSeats: 0,
-      monthlyCost: sub?.plans?.price_monthly ?? 499,
+      monthlyCost: sub?.plans?.monthly_price_cents ? Math.round(sub.plans.monthly_price_cents / 100) : 499,
       nextBillingDate: '2026-07-01',
       history: SEED_BILLING.history,
     }

@@ -178,7 +178,7 @@ function SkillProgressBar({ skillBand, index }: { skillBand: SkillBand; index: n
       </div>
       <div className="flex-1 relative h-2 rounded-full bg-border overflow-hidden">
         <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          className="absolute inset-y-0 left-0 rounded-full transition-all [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]"
           style={{
             width: `${width}%`,
             background: improvement > 0
